@@ -6,7 +6,7 @@ const FALLBACK_WEB3_PROVIDER = process.env.REACT_APP_NETWORK || 'http://0.0.0.0:
  * @returns a Promise that resolves if web3 instance 
  * is successfully made, otherwise rejects with error
  */
-const getWeb3 = () =>
+export const getWeb3 = () =>
   new Promise((resolve, reject) => {
     // Wait for loading completion to avoid race conditions with web3 injection timing.
     window.addEventListener('load', async () => {
@@ -39,11 +39,9 @@ const getWeb3 = () =>
     });
   });
 
-const getGanacheWeb3 = () => {
+export const getGanacheWeb3 = () => {
   const provider = new Web3.providers.HttpProvider('http://0.0.0.0:8545');
   const web3 = new Web3(provider);
   console.log('No local ganache found.');
   return web3;
 };
-
-export { getWeb3, getGanacheWeb3 };

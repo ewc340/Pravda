@@ -1,0 +1,1 @@
+export { getWeb3, getGanacheWeb3 } from './getWeb3'

@@ -9,9 +9,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', handlers.rootHandler.root);
 app.get('/hello/:name', handlers.helloHandler.sayHelloWithName);
-app.post('/auction_create', handlers.auctionHandler.createNewAuction);
-app.post('/make_bid', handlers.auctionHandler.makeBid);
-app.post('/auction_end', handlers.auctionHandler.endAuction);
+
+app.post('/auction/create', handlers.auctionHandler.createNewAuction);
+app.post('/auction/bid', handlers.auctionHandler.makeBid);
+app.post('/auction/end', handlers.auctionHandler.endAuction);
 
 app.listen(port, err => {
   if (err) return console.error(err);
