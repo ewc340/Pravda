@@ -1,0 +1,31 @@
+.main-addAuctionItem-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.add-new-item-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  width: 10vw;
+  height: 10vh;
+  padding: 10px;
+  cursor: pointer;
+  border: 1px solid;
+}
+
+.add-auction-item-form-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.auction-item-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

@@ -1,0 +1,13 @@
+.loader {
+  width: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 0;
+}
+
+.loader h3 {
+   margin-top: 30px;
+}

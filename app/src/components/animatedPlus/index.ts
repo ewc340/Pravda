@@ -1,0 +1,1 @@
+export { AnimatedPlus } from './AnimatedPlus';

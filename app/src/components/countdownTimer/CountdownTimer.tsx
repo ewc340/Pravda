@@ -1,156 +1,56 @@
-/* This component gives credit to https://www.florin-pop.com/blog/2019/05/countdown-built-with-react/ */
-
-import React from 'react';
+// import CountDown from 'react-native-countdown-component';
 import moment from 'moment';
-import './CountdownTimer.css';
+import React, { Component } from 'react';
 
 interface Props {
   timeTillDate: string;
-  timeFormat: string;
 }
 
 interface State {
-  days: string | undefined;
-  hours: string | undefined;
-  minutes: string | undefined;
-  seconds: string | undefined
+  totalDuration: string;
 }
 
-interface SVGCircleProps {
-  radius: number;
-}
-
-export class CountdownTimer extends React.Component<Props, State> {
-  interval!: NodeJS.Timeout;
-    
-    constructor(props: Props) {
-      super(props);
-      this.state = {
-        days: undefined,
-        hours: undefined,
-        minutes: undefined,
-        seconds: undefined
-      };
-    }
-
-    componentDidMount() {
-        this.interval = setInterval(() => {
-            const { timeTillDate, timeFormat } = this.props;
-            const futureTime = moment(timeTillDate, timeFormat);
-            const now = moment().format(timeFormat);
-            const countdown = moment(futureTime.diff(now));
-            const days = countdown.format('D');
-            const hours = countdown.format('HH');
-            const minutes = countdown.format('mm');
-            const seconds = countdown.format('ss');
-
-            this.setState({ days, hours, minutes, seconds });
-        }, 1000);
-    }
-
-    componentWillUnmount() {
-        if (this.interval) {
-            clearInterval(this.interval);
-        }
-    }
-
-    render() {
-        const { days, hours, minutes, seconds } = this.state;
-
-        // Mapping the date values to radius values
-        const daysRadius = mapNumber(Number(days), 30, 0, 0, 360);
-        const hoursRadius = mapNumber(Number(hours), 24, 0, 0, 360);
-        const minutesRadius = mapNumber(Number(minutes), 60, 0, 0, 360);
-        const secondsRadius = mapNumber(Number(seconds), 60, 0, 0, 360);
-
-        if (!seconds) {
-            return null;
-        }
-
-        return (
-            <div>
-                <div className="countdown-wrapper">
-                    {days && (
-                        <div className="countdown-item">
-                            <SVGCircle radius={daysRadius} />
-                            {days}
-                            <span>days</span>
-                        </div>
-                    )}
-                    {hours && (
-                        <div className="countdown-item">
-                            <SVGCircle radius={hoursRadius} />
-                            {hours}
-                            <span>hours</span>
-                        </div>
-                    )}
-                    {minutes && (
-                        <div className="countdown-item">
-                            <SVGCircle radius={minutesRadius} />
-                            {minutes}
-                            <span>minutes</span>
-                        </div>
-                    )}
-                    {seconds && (
-                        <div className="countdown-item">
-                            <SVGCircle radius={secondsRadius} />
-                            {seconds}
-                            <span>seconds</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    }
-}
-
-const SVGCircle = ({ radius }: SVGCircleProps) => (
-    <svg className="countdown-svg">
-        <path
-            fill="none"
-            stroke="#333"
-            stroke-width="4"
-            d={describeArc(50, 50, 48, 0, radius)}
-        />
-    </svg>
-);
-
-// From StackOverflow: https://stackoverflow.com/questions/5736398/how-to-calculate-the-svg-path-for-an-arc-of-a-circle
-function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-    var angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-
-    return {
-        x: centerX + radius * Math.cos(angleInRadians),
-        y: centerY + radius * Math.sin(angleInRadians)
+export class CountdownTimer extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    //initialize the counter duration
+    this.state = {
+      totalDuration: '',
     };
-}
+  }
 
-function describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number) {
-    var start = polarToCartesian(x, y, radius, endAngle);
-    var end = polarToCartesian(x, y, radius, startAngle);
+  componentDidMount() {
+    var that = this;
 
-    var largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+    var date = moment()
+      .utcOffset('+05:30')
+      .format('YYYY-MM-DD hh:mm:ss');
+    
+    var expirydate = '2020-04-21 04:00:45';
 
-    var d = [
-        'M',
-        start.x,
-        start.y,
-        'A',
-        radius,
-        radius,
-        0,
-        largeArcFlag,
-        0,
-        end.x,
-        end.y
-    ].join(' ');
+    var diffr = moment.duration(moment(expirydate).diff(moment(date)));
 
-    return d;
-}
+    var hours = diffr.asHours();
+    var minutes = diffr.minutes();
+    var seconds = diffr.seconds();
+    
+    var d = String(hours * 60 * 60 + minutes * 60 + seconds);
+    //converting in seconds
 
-// From StackOverflow: https://stackoverflow.com/questions/10756313/javascript-jquery-map-a-range-of-numbers-to-another-range-of-numbers
-function mapNumber(number: number, in_min: number, in_max: number, out_min: number, out_max: number) {
+    that.setState({ totalDuration: d });
+    //Settign up the duration of countdown in seconds to re-render
+  }
+
+  render() {
     return (
-        ((number - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
+      <div style={{ flex: 1, justifyContent: 'center' }}>
+        {/* <CountDown
+          until={this.state.totalDuration}
+          onFinish={() => alert('finished')}
+          onPress={() => alert('hello')}
+          size={20}
+        /> */}
+      </div>
     );
+  }
 }
