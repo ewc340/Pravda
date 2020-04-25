@@ -1,8 +1,8 @@
-import { Contract, DeployOptions} from 'web3-eth-contract';
+import { DeployOptions} from 'web3-eth-contract';
 import { getWeb3 } from '../getWeb3';
 import { contractABI, contractBIN, contractDeployerAddress } from './getAuctionInformation';
 
-export async function createAuctionContractInstance(bidTime: number, beneficiary: string): Promise<Contract> {
+export async function createAuctionContractInstance(bidTime: number, beneficiary: string) {
   const web3 = await getWeb3();
   const auctionContractABI = contractABI();
   let contractInstance = new web3.eth.Contract(JSON.parse(auctionContractABI));
@@ -28,8 +28,8 @@ export async function createAuctionContractInstance(bidTime: number, beneficiary
       console.log('Deployed Contract Address : ', newContractInstance.options.address);
       contractInstance = newContractInstance;
   }).catch((err: any) => {
-    return err;
+    return { ok: false, err };
   });
 
-  return contractInstance;
+  return { ok: true, data: { contractInstance } };
 }
