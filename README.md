@@ -82,3 +82,4 @@ Future work will involve:
 3. Improve security and anonymity on the platform
 4. Maintaining stronger smart contract logic
 5. Deploying smart contract on the Ethereum Mainnet or creating a private blockchain to host auctions
+6. Creating non-fungible **ERC-721** non-fungible tokens to certify and grant users access to auctions
