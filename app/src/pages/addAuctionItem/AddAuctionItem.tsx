@@ -66,7 +66,6 @@ export class AddAuctionItem extends PureComponent<Props, State> {
     if (response) {
       history.push(`/auction/${response.auctionId}`)
     }
-    console.log(response);
   }
 
   changeHandler = (event: any) => {
@@ -87,7 +86,7 @@ export class AddAuctionItem extends PureComponent<Props, State> {
   }
 
   render() {
-    const { modalIsOpen, formItemDescription, formItemName, formBidTime, data } = this.state;
+    const { modalIsOpen, formItemName, data } = this.state;
 
     return (
       <div>

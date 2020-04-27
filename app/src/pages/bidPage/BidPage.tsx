@@ -1,15 +1,13 @@
 import Button from '@material-ui/core/Button';
 import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import TextField from '@material-ui/core/TextField';
 import React, { PureComponent } from 'react';
 import Countdown from 'react-countdown';
 import Modal from 'react-modal';
-import { useParams } from "react-router-dom";
 import * as utils from 'utils';
-import { CountdownTimerComponent, LoaderComponent, LogoBar } from '../../components';
+import { LoaderComponent, LogoBar } from '../../components';
 import './BidPage.css';
 
 
@@ -37,12 +35,10 @@ interface AuctionInformation {
   description: string;
   winner: string;
   expiresAt: any;
-  bidAmount: number; // if -1 then either visitor, have not bidded, or beneficiary - should not be able to bid
+  bidAmount: number; 
   contractAddress: string;
   numBids: number;
 }
-
-// bidAmount should be > -1
 
 const HIGHEST_BID = 2**256 - 1;
 
@@ -69,10 +65,12 @@ export class BidPage extends PureComponent<Props, State> {
     const auctionInfoResponse = await utils.api.getAuctionInformation(id);
     if (auctionInfoResponse) {
       this.setState({ auctionInformation: auctionInfoResponse });
+      
+      // get the winner 
       if (auctionInfoResponse && Date.now() > auctionInfoResponse.expiresAt && auctionInfoResponse.winner === '') {
         const winner = await utils.api.endAuction(auctionInfoResponse.contractAddress);
         this.setState({ winner });
-      } else if (auctionInfoResponse.winner != '')  {
+      } else if (auctionInfoResponse.winner != '')  { // winner already exists
         this.setState({ winner: auctionInfoResponse.winner });
       }
     }
@@ -107,6 +105,7 @@ export class BidPage extends PureComponent<Props, State> {
       return;
     }
 
+    // submit bid to Auction smart contract instance
     if (auctionInformation && web3 && accounts.length > 0) {
       const contract = new web3.eth.Contract(JSON.parse(utils.contractABI()), auctionInformation.contractAddress);
       await contract.methods.bid().send({ from: senderAddress, value: proposedBid })
@@ -128,14 +127,12 @@ export class BidPage extends PureComponent<Props, State> {
               .on('error', (_err: any) => this.setState({ bidStatus: 'fail' }));
 
     } else {
-      // need to show error message here
       this.setState({ bidStatus: 'fail' })
     }
   }
 
   onBidAmountChange = (event: any) => {
     const proposedBid = event.target.value;
-    const { web3 } = this.state;
     this.setState({ proposedBid });
   }
 
@@ -149,9 +146,8 @@ export class BidPage extends PureComponent<Props, State> {
     this.setState({ bidStatus: 'idle' });
   }
   render() {
-    console.log('in render');
-    const { auctionInformation, bidAmount, senderAddress, accounts, balance, timeExpiredModalIsOpen, bidStatus, proposedBid, winner } = this.state;
-    console.log('senderAddress', senderAddress);
+    const { auctionInformation, bidAmount, senderAddress, accounts, balance, timeExpiredModalIsOpen, bidStatus, winner } = this.state;
+
     return (
       auctionInformation === undefined ? <LoaderComponent /> :
       <div className='main-bidding-container'>
@@ -188,8 +184,6 @@ export class BidPage extends PureComponent<Props, State> {
               </FormControl>
             </div>
           </div>
-
-          {/* <h1>Proposed Bid: {proposedBid < HIGHEST_BID ? proposedBid : null}</h1> */}
 
           <div style={{ marginBottom: '10px', padding: '10px', }}>
             <TextField
