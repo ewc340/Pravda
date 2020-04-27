@@ -1,3 +1,4 @@
+// Credit to https://codepen.io/Inlesco/pen/XXRRmY. 
 import React from 'react';
 import './AnimatedPlus.css';
 

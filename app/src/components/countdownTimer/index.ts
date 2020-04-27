@@ -1,1 +1,1 @@
-export { CountdownTimer } from './CountdownTimer';
+export { CountdownTimerComponent } from './CountdownTimer';

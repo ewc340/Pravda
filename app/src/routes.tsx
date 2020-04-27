@@ -2,7 +2,7 @@ import { App } from 'App';
 import history from'browserHistorySetup';
 import { BidPage } from 'pages';
 import React from 'react';
-import { Route, Router, Switch, RouteComponentProps } from 'react-router-dom'; 
+import { Route, RouteComponentProps, Router, Switch } from 'react-router-dom'; 
 
 interface MatchParams {
   id: string;

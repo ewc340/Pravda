@@ -8,10 +8,10 @@ export const createBid = async (auctionId: string, senderAddress: string, bidAmo
     sender_address: senderAddress,
     bid_amount: bidAmount
   }
-  const response = await axios.post(URL, data)
+  const response = await axios.post(URL, data);
   
   if (response.data.ok) {
-    return response.data.data;
+    return response.data.ok;
   } else {
     return null;
   }

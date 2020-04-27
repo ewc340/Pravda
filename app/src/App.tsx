@@ -9,7 +9,7 @@ interface State {
 export class App extends Component<{}, State> {
   state = { accounts: []}
   componentDidMount = async () => {
-    const web3: any = await utils.getWeb3();
+    const web3: any = await utils.getGanacheWeb3();
     const accounts = await web3.eth.getAccounts();
     if (accounts.length > 0) {
       this.setState({ accounts });

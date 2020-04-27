@@ -1,8 +1,17 @@
+import Button from '@material-ui/core/Button';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
+import TextField from '@material-ui/core/TextField';
 import React, { PureComponent } from 'react';
+import Countdown from 'react-countdown';
+import Modal from 'react-modal';
 import { useParams } from "react-router-dom";
-import { /* CountdownTimer, */ LoaderComponent, LogoBar } from '../../components';
-import './BidPage.css';
 import * as utils from 'utils';
+import { CountdownTimerComponent, LoaderComponent, LogoBar } from '../../components';
+import './BidPage.css';
+
 
 interface Props {
   id: string;
@@ -14,6 +23,12 @@ interface State {
   bidStatus: 'success' | 'idle' | 'fail';
   bidTransactionHash: string;
   bidAmount: number;
+  proposedBid: number;
+  web3: any;
+  balance: number;
+  senderAddress: string;
+  timeExpiredModalIsOpen: boolean;
+  winner: string;
 }
 
 interface AuctionInformation {
@@ -24,6 +39,7 @@ interface AuctionInformation {
   expiresAt: any;
   bidAmount: number; // if -1 then either visitor, have not bidded, or beneficiary - should not be able to bid
   contractAddress: string;
+  numBids: number;
 }
 
 // bidAmount should be > -1
@@ -33,85 +49,226 @@ const HIGHEST_BID = 2**256 - 1;
 export class BidPage extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { auctionInformation: undefined, accounts: [], bidStatus: 'idle', bidTransactionHash: '', bidAmount: 3204234 };
+    this.state = { 
+      senderAddress: '', 
+      auctionInformation: undefined, 
+      accounts: [], 
+      bidStatus: 'idle', 
+      bidTransactionHash: '', 
+      bidAmount: HIGHEST_BID, 
+      proposedBid: HIGHEST_BID,
+      web3: undefined, 
+      balance: 0,
+      timeExpiredModalIsOpen: false,
+      winner: ''
+    };
   }
 
   async componentDidMount () {
     const { id } = this.props;
     const auctionInfoResponse = await utils.api.getAuctionInformation(id);
     if (auctionInfoResponse) {
-      this.setState({ auctionInformation: auctionInfoResponse })
+      this.setState({ auctionInformation: auctionInfoResponse });
+      if (auctionInfoResponse && Date.now() > auctionInfoResponse.expiresAt && auctionInfoResponse.winner === '') {
+        const winner = await utils.api.endAuction(auctionInfoResponse.contractAddress);
+        this.setState({ winner });
+      } else if (auctionInfoResponse.winner != '')  {
+        this.setState({ winner: auctionInfoResponse.winner });
+      }
     }
+    const web3: any = await utils.getGanacheWeb3();
+    const accounts = await web3.eth.getAccounts();
+    const balance = await web3.eth.getBalance(accounts[0]);
+    if (accounts.length > 0) {
+      this.setState({ accounts, web3, balance: web3.utils.fromWei(balance) });
+    }
+  }
 
+  getBalance = async (senderAddress: string) => {
+    const { web3 } = this.state;
+    if (web3 && senderAddress !== '') {
+      const balance = await web3.eth.getBalance(senderAddress);
+      this.setState({ balance: web3.utils.fromWei(balance) });
+    }
+  }
+
+  setTimeExpiredModal = () => {
+    this.setState({ timeExpiredModalIsOpen: false });
   }
 
   bid = async (event: any) => {
-    // check for sender address
     event.preventDefault();
-    const { auctionInformation, bidAmount } = this.state;
+    const { auctionInformation, proposedBid, web3, accounts, senderAddress } = this.state;
     const { id } = this.props;
 
-    const web3: any = await utils.getWeb3();
-    const accounts = await web3.eth.getAccounts();
-    if (accounts.length > 0) {
-      this.setState({ accounts });
+    /* Check if time expired already */
+    if (auctionInformation && Date.now() > auctionInformation.expiresAt) {
+      this.setState({ timeExpiredModalIsOpen: true })
+      return;
     }
-    console.log(accounts);
 
-    if (auctionInformation) {
+    if (auctionInformation && web3 && accounts.length > 0) {
       const contract = new web3.eth.Contract(JSON.parse(utils.contractABI()), auctionInformation.contractAddress);
-      await contract.methods.bid().send({ from: '0x07eF057F32b590a7D00F8Bb788BFE997321CAa83', value: bidAmount })
+      await contract.methods.bid().send({ from: senderAddress, value: proposedBid })
               .on('transactionHash', async (hash: string) => { 
                 console.log('transaction was successful');
 
                 // upload bid data to backend 
-                const createBidResponse = await utils.api.createBid(id, accounts[0], bidAmount);
+                const createBidResponse = await utils.api.createBid(id, senderAddress, proposedBid);
+                console.log("response", createBidResponse);
                 if (createBidResponse) {
-                  this.setState({ bidStatus: 'success', bidTransactionHash: hash });
+                  console.log('set bid status to success');
+                  this.setState({ bidStatus: 'success', bidTransactionHash: hash, bidAmount: proposedBid });
+                }
+                const auctionInfoResponse = await utils.api.getAuctionInformation(id);
+                if (auctionInfoResponse) {
+                  this.setState({ auctionInformation: auctionInfoResponse })
                 }
               })
               .on('error', (_err: any) => this.setState({ bidStatus: 'fail' }));
 
     } else {
       // need to show error message here
-      alert('bid failure');
+      this.setState({ bidStatus: 'fail' })
     }
   }
 
   onBidAmountChange = (event: any) => {
-    const bidAmount = event.target.value;
-    this.setState({ bidAmount });
+    const proposedBid = event.target.value;
+    const { web3 } = this.state;
+    this.setState({ proposedBid });
   }
 
+  onAddressSelectionChange = (event: any) => {
+    const address = event.target.value;
+    this.setState({ senderAddress: address });
+    this.getBalance(address);
+  }
+
+  setBidStatusToIdle = () => {
+    this.setState({ bidStatus: 'idle' });
+  }
   render() {
-    const { auctionInformation, bidAmount } = this.state;
+    console.log('in render');
+    const { auctionInformation, bidAmount, senderAddress, accounts, balance, timeExpiredModalIsOpen, bidStatus, proposedBid, winner } = this.state;
+    console.log('senderAddress', senderAddress);
     return (
       auctionInformation === undefined ? <LoaderComponent /> :
-      <div>
+      <div className='main-bidding-container'>
         <LogoBar />
         <div className='main-bidPage-container'>
-          <div className='bidPage-image-container'>
-            <img src={require('assets/computers.jpg')} width={'50%'} />
+          <div className='bid-info-header'>
+            <h1>{auctionInformation.name}</h1>
+            {winner === '' ? <h1><Countdown date={auctionInformation.expiresAt} /></h1> : <h3>{`Winner: ${winner}`}</h3>}
           </div>
           <div className='bid-info-container'>
-            <h1>{auctionInformation.name}</h1>
-            <div className='bidItem-info'>
-              {auctionInformation.bidAmount > -1 ? 
-                (
-                  <p>Current bid: { auctionInformation.bidAmount }</p>
-                ) : 
-                (
-                  <div>
-                    <input type='text' name='bidAmount' value={bidAmount} onChange={this.onBidAmountChange} />
-                    <button onClick={this.bid}>Bid!</button>
-                  </div>
-                )
-              }
+            <div className='bid-info-left'>
+              <h1>Auction Information</h1>
+              <p style={{ textAlign: 'center', marginTop: '15px' }}>This is some really nice information about this auction. This product/service is amazing and I would advise anyone to try it out.</p>
+              <h1 style={{ textAlign: 'center', marginTop: '15px' }}>Additional Information</h1>
+              <p style={{ textAlign: 'center', marginTop: '15px' }}>{auctionInformation.description}</p>
             </div>
-            {/* <CountdownTimer timeTillDate="04 22 2020 04:00:45" timeFormat="MM DD YYYY hh:mm:ss " /> */}
+            <div className='bid-info-right'>
+              <h3 style={{ padding: '10px' }}>Bids: {auctionInformation.numBids} </h3>
+              <h3 style={{ padding: '10px' }}>Beneficiary: {auctionInformation.beneficiary} </h3>
+              {accounts.length > 0 ? <h3 style={{ padding: '10px' }}>Balance: {balance} Ether</h3> : null}
+              <h3 style={{ padding: '10px' }}>Current Bid: {bidAmount == HIGHEST_BID ? 'Bid the lowest bid below!' : bidAmount} </h3>
+              <h3 style={{ padding: '10px' }}>Select a sender address: </h3>
+              <FormControl style={{ padding: '10px' }}>
+                <Select
+                  value={senderAddress}
+                  onChange={this.onAddressSelectionChange}
+                >
+                  {accounts.map((account: string) => {
+                    if (account !== auctionInformation.beneficiary) {
+                      return <MenuItem value={account}>{account}</MenuItem>
+                    }
+                  })}
+                </Select>
+              </FormControl>
+            </div>
           </div>
+
+          {/* <h1>Proposed Bid: {proposedBid < HIGHEST_BID ? proposedBid : null}</h1> */}
+
+          <div style={{ marginBottom: '10px', padding: '10px', }}>
+            <TextField
+              id="standard-number"
+              label="Input Bid"
+              type="number"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              variant="filled"
+              onChange={this.onBidAmountChange}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={this.bid}
+              size="large"
+              style={{ fontSize: '22px' }}
+            >
+              Send Bid
+            </Button>
+          </div>
+          <Modal isOpen={timeExpiredModalIsOpen} style={customModalStyle}>
+            <div className='time-expired-modal-container'>
+              <h1>The auction has already ended.</h1>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={this.setTimeExpiredModal}
+                size="small"
+                style={{ width: '20%' }}
+              >
+                OK
+              </Button>
+            </div>
+          </Modal>
+          <Modal isOpen={bidStatus === 'success'} style={customModalStyle}>
+            <div className='time-expired-modal-container'>
+              <h1>Your transaction was successful!</h1>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={this.setBidStatusToIdle}
+                size="small"
+                style={{ color: 'white', backgroundColor: 'green' }}
+              >
+                OK
+              </Button>
+            </div>
+          </Modal>
+          <Modal isOpen={bidStatus === 'fail'} style={customModalStyle}>
+            <div className='time-expired-modal-container'>
+              <h2 style={{ textAlign: 'center' }}>An error occurred. Either you did not have the lowest bid or we could not accept your transaction.</h2>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={this.setBidStatusToIdle}
+                size="small"
+                style={{ color: 'white' }}
+              >
+                OK
+              </Button>
+            </div>
+          </Modal>
         </div>
       </div>
     )
   }
 }
+
+const customModalStyle = {
+  content: {
+    width: '40%',
+    height: '30%',
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)'
+  }
+};

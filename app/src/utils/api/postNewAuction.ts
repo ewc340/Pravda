@@ -7,7 +7,7 @@ export const postNewAuction = async (itemName: string, itemDescription: string, 
     bid_time: bidTime,
     beneficiary,
     item_name: itemName,
-    item_description: itemDescription
+    description: itemDescription
   }
   console.log('posting new auction...', data);
   const response = await axios.post(URL, data);

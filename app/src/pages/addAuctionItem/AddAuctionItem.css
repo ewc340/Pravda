@@ -3,6 +3,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
 .add-new-item-container {
@@ -14,14 +15,29 @@
   height: 10vh;
   padding: 10px;
   cursor: pointer;
-  border: 1px solid;
+  border: 1px dashed #D3D3D3;
+  margin-top: 10px;
 }
 
 .add-auction-item-form-container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+  padding: 20px;
+  height: 100%;
+}
+
+.modal-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%
+}
+
+.add-auction-item-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
 }
 
 .auction-item-form {
