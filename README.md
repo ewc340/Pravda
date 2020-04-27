@@ -74,3 +74,11 @@ Below are some screenshots and descriptions of the usage of the application.
 | ![Winner](screenshots/winner.png)  | ![Auction End](screenshots/auction-end.png) |
 |:---:|:---:|
 | Once the countdown timer is up, then the winner will be shown | Once the auction ends and a user tries to bid, then it won't be possible. |
+
+## Future work
+Future work will involve:
+1. Building a robust procurement system platform that can scale to more users
+2. Updating the UI/UX experience 
+3. Improve security and anonymity on the platform
+4. Maintaining stronger smart contract logic
+5. Deploying smart contract on the Ethereum Mainnet or creating a private blockchain to host auctions
