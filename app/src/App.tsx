@@ -14,12 +14,6 @@ export class App extends Component<{}, State> {
     if (accounts.length > 0) {
       this.setState({ accounts });
     }
-    console.log(accounts);
-    let balance = accounts.length > 0 ? await web3.eth.getBalance(accounts[0]) : web3.utils.toWei('0');
-    // const contract = new web3.eth.Contract(JSON.parse(utils.contractABI()), '0x3DA9c4916C2007968d6748AC191e3B338d71571a');
-    // await contract.methods.bid().send({ from: accounts[0], value: 100000 }).catch((err: any) => {
-    //   console.log(err);
-    // });
   }
 
   render() {
