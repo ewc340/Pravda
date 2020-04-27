@@ -13,7 +13,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', handlers.rootHandler.root);
-app.get('/hello/:name', handlers.helloHandler.sayHelloWithName);
 
 app.get('/auction/all', handlers.auctionHandler.getAllBids);
 app.post('/auction/create', handlers.auctionHandler.createNewAuction);

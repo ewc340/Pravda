@@ -15,12 +15,12 @@ export const createNewAuction = async (req: Request, res: Response) => {
     return res.status(400).send({ ok: false, error: 'beneficiary cannot be false' });
   }
 
+  // create new Auction smart contract instance
   const contractInstance = await utils.auctions.createAuctionContractInstance(bidTime, beneficiary);
   let contractAddress;
   if (contractInstance.ok) {
     contractAddress = contractInstance.data.contractInstance.options.address;
   } else {
-    console.log('enter here');
     return res.status(400).send({ ok: false, err: 'contract creation failed' })
   }
 
@@ -37,8 +37,7 @@ export const createNewAuction = async (req: Request, res: Response) => {
     numBids: 0
   }
 
-  console.log('saved description', itemDescription);
-
+  // create and upload new auction item to MongoDB
   const auctionItemAsModel = new models.GoodsOrServicesModel(auctionItem);
   await auctionItemAsModel.save().then(() => console.log('success')).catch((err: any) => console.log('error when saving', err));
 
@@ -47,8 +46,6 @@ export const createNewAuction = async (req: Request, res: Response) => {
 
 /**
  * makeBid will only be called with a lower bid on each call
- * @param req 
- * @param res 
  */
 export const makeBid = async (req: Request, res: Response) => {
   console.log("accepted new connection in makeBid");
@@ -61,22 +58,21 @@ export const makeBid = async (req: Request, res: Response) => {
   await models.GoodsOrServicesModel.findOneAndUpdate(filter, update, { new: true, upsert: true })
                               .then((auction: any) => console.log('new auction logic', auction))
                               .catch((_err: any) => res.send({ ok: false }));
-  console.log('returned response');
   return res.send({ ok: true });
 }
 
 export const endAuction = async (req: Request, res: Response) => {
+  console.log("accepted new connection in endAuction");
   const contractAddress = req.body.contract_address;
   const contractInstance = await utils.auctions.getAuctionContractInstance(contractAddress);
   const auctionEndParameters = {
     from: utils.auctions.getAuctionInformation.contractDeployerAddress()
   };
   console.log('ending auction for', contractAddress);
-  await contractInstance.methods.auctionEnd().send(auctionEndParameters, (err: any, transactionHash: any) => {
+  await contractInstance.methods.auctionEnd().send(auctionEndParameters, (err: any, _transactionHash: any) => {
     if (err) {
-      console.log('error occurred', err)
+      console.log('error occurred when trying to end auction', err)
     }
-    console.log('transaction hash is for auction end is', transactionHash)
   }).catch((err: any) => {
       res.status(404);
       return res.send({ ok: false, data: err});
@@ -91,7 +87,7 @@ export const endAuction = async (req: Request, res: Response) => {
   if (auction == null) {
     return res.send({ ok: false })
   } else {
-    console.log('new auction logic', auction);
+    console.log('new auction data uploaded', auction);
   }
   return res.send({ ok: true, data: winner });
 }
@@ -99,7 +95,6 @@ export const endAuction = async (req: Request, res: Response) => {
 export const getContractInstance = async (req: Request, res: Response) => {
   const contractAddress = req.params.contractAddress;
   const contractInstance = await utils.auctions.getAuctionContractInstance(contractAddress);
-  console.log(contractInstance);
   res.send({ ok: true, contractInstance: contractInstance });
 }
 
@@ -131,7 +126,7 @@ export const getAuctionInformation = async (req: Request, res: Response) => {
 }
 
 export const getAllBids = async (_req: Request, res: Response) => {
-  console.log('getting all');
+  console.log('getting all bids');
   const auction: any = await models.GoodsOrServicesModel.find();
   if (auction == null) {
     return res.send({ ok: false, data: null })
