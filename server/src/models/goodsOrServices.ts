@@ -1,4 +1,3 @@
-import { ObjectId } from 'bson';
 import * as mongoose from 'mongoose';
 
 const GoodsOrServicesSchema = new mongoose.Schema({
@@ -10,14 +9,15 @@ const GoodsOrServicesSchema = new mongoose.Schema({
     type: Date,
     default: Date.now()
   },
-  id: ObjectId,
+  id: String,
   winner: String,
   bidders: {
     type: Map,
     of: String
   },
   auctionContractAddress: String,
-  expiresAt: Date
+  expiresAt: Number,
+  numBids: Number
 })
 
 export const GoodsOrServicesModel = mongoose.model('GoodsOrService', GoodsOrServicesSchema);
